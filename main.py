@@ -7,7 +7,7 @@ from os import mkdir
 from os.path import exists
 #from math import round
 
-def merge_image(imgs, width, space, out_n, quality, out_path):
+def merge_image(imgs, format, width, space, out_n, quality, out_path):
     color = (255, 255, 255)
     total_num = len(imgs)
     if total_num % out_n != 0:
@@ -40,7 +40,7 @@ def merge_image(imgs, width, space, out_n, quality, out_path):
                           imgs_size[per_page * (i - 1) : per_page * i], space) #拼接单个长图
         if not exists(out_path):
             mkdir(out_path)
-        result.save(out_path + '/'+ str(i) + '.jpg', quality=quality) #存起来
+        result.save(out_path + '/'+ str(i) + '.' + format, quality=quality) #存起来
 
     final_sum_height = sum([im[1] + space for im in imgs_size[per_page * (out_n - 1):]]) - space
     # print(final_sum_height)
@@ -51,7 +51,7 @@ def merge_image(imgs, width, space, out_n, quality, out_path):
     result = merge_single(result,
                       imgs[per_page * (out_n - 1) : ],
                       imgs_size[per_page * (out_n - 1) : ], space) #拼接单个长图
-    result.save(out_path + '/'+ str(out_n) + '.jpg', quality=quality) #存起来
+    result.save(out_path + '/'+ str(out_n) + '.' + format, quality=quality) #存起来
 
     print('\n图片总数: ', total_num)
     print('分割条数: ', out_n)
@@ -111,53 +111,79 @@ def read_pic():
         ims[i] = ims[i].convert("RGB")
     return (ims)
 
+def is_customized(args):
+    while True:
+        user_input = input(args).lower()
+        if user_input in ['y', 'yes']:
+            return True
+        elif user_input in ['n', 'no']:
+            return False
+        print('请输入 Yes/Y 或 No/N （大小写均可）')
+
+
 
 # 主函数运行
 def main():
-    # format = input('请输入要生成的图片格式。默认png，可选jpg等：')
-    width = input('输入长图宽，不输默认800：')
-    space = input('输入图片间距，不输默认10：')
-    pages = input('输出多少张拼接图，不输默认9：')
-    quality = input('jpg压缩质量，不输默认80，越低质量越差，越高体积越大：')
-    out_path = input('输出文件夹，不输默认在当前目录下新建结果文件夹:')
+    
+    # 各参数默认值
+    format = 'png'
+    width = 800
+    space = 10
+    pages = 9
+    quality = 80
+    out_path = str(current_dir / '长图')
+    
+    # 添加用户是否开启自定义设置功能    
+    config_open =  is_customized('是否要自定义设置相关参数？(y/n): ')
+    
+    # 若开启自定义设置，将用有效输入值替换默认值
+    if config_open:
+        
+        user_input = input('请输入要生成的图片格式。默认png，可选jpg等：').strip()
+        if user_input:
+            format = user_input
 
-    # 图片输出格式选择
-    # if format == "":
-    #     format = "png"
-    # else:
-    #     format = "jpg"
+        user_input = input('输入长图宽，不输默认800：').strip()
+        if user_input:
+            try: 
+                width = int(user_input) if width else 800
+            except ValueError:
+                print("未输入有效数字，将使用默认值800")
 
-    if width == "":
-        width = 800
-    else:
-        width = eval(width)
+        user_input = input('输入图片间距，不输默认10：').strip()
+        if user_input:
+            try: 
+                space = int(user_input) if space else 10
+            except ValueError:
+                print("未输入有效数字，将使用默认值10")
 
-    if space == "":
-        space = 10
-    else:
-        space = eval(space)
+        user_input = input('输出多少张拼接图，不输默认9：').strip()
+        if user_input:
+            try: 
+                pages = int(user_input) if pages else 9
+            except ValueError:
+                print("未输入有效数字，将使用默认值9")
 
-    if pages == "":
-        pages = 9
-    else:
-        pages = eval(pages)
+        user_input = input('压缩质量0-100，不输默认80，数字越大质量越高：').strip()
+        if user_input:
+            try: 
+                quality = int(user_input) if quality else 80
+            except ValueError:
+                print("未输入有效数字，将使用默认值80")
 
-    if quality == "":
-        quality = 80
-    else:
-        quality = eval(quality)
+        user_input = input('输出文件夹，不输默认在当前目录下新建结果文件夹:').strip()
+        if user_input:
+            out_path = user_input
 
-    if out_path == "":
-        out_path = str(current_dir / '长图')
-
-    # print('\n连页格式: ', format)
-    # print('图片宽: ', width)
-    # print('图片间距: ', format)
-    # print('共输出' + str(pages) + '张图')
-    # print('jpg图片压缩质量', quality)
+    print('\n结果图片格式: ', format)
+    print('图片宽: ', width)
+    print('图片间距: ', space)
+    print('共输出' + str(pages) + '张图')
+    print('压缩质量', quality)
+    print('生成结果目录', out_path)
 
     try:
-        merge_image(read_pic(), width, space, pages, quality, out_path)
+        merge_image(read_pic(), format, width, space, pages, quality, out_path)
         print('拼图完成\n')
     except Exception as e:
         # 处理所有异常
