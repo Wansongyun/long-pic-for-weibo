@@ -1,11 +1,10 @@
 from glob import glob
-import logging
 from PIL.Image import open, new, Resampling
 from pathlib import Path
 from re import split
-from os import mkdir
+from os import mkdir, remove
 from os.path import exists
-#from math import round
+import logging
 
 def merge_image(imgs, format, width, space, out_n, quality, out_path):
     color = (255, 255, 255)
@@ -40,7 +39,10 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
                           imgs_size[per_page * (i - 1) : per_page * i], space) #拼接单个长图
         if not exists(out_path):
             mkdir(out_path)
-        result.save(out_path + '/'+ str(i) + '.' + format, quality=quality) #存起来
+        file_path = out_path + '/'+ str(i) + '.' + format
+        if exists(file_path):
+            remove(file_path)
+        result.save(file_path, quality = quality) 
 
     final_sum_height = sum([im[1] + space for im in imgs_size[per_page * (out_n - 1):]]) - space
     # print(final_sum_height)
@@ -51,7 +53,10 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
     result = merge_single(result,
                       imgs[per_page * (out_n - 1) : ],
                       imgs_size[per_page * (out_n - 1) : ], space) #拼接单个长图
-    result.save(out_path + '/'+ str(out_n) + '.' + format, quality=quality) #存起来
+    file_path = out_path + '/'+ str(i) + '.' + format
+    if exists(file_path):
+        remove(file_path)
+    result.save(file_path, quality = quality) #存起来
 
     print('\n图片总数: ', total_num)
     print('分割条数: ', out_n)
@@ -76,7 +81,7 @@ def sorted_alphanumeric(data):
 
 # 获取当前文件夹下图片列表
 current_dir = Path(__file__).parent
-origin_pic_dir = current_dir / '原图'
+origin_pic_dir = current_dir / 'origin_pic'
 
 logging.info(origin_pic_dir)
 
@@ -101,7 +106,6 @@ image_files = glob(str(origin_pic_dir / '*.png')) + \
 #         image_files.extend(directory.glob(ext))
         
 #     return image_files
-
 
 
 def read_pic():
@@ -131,7 +135,7 @@ def main():
     space = 10
     pages = 9
     quality = 80
-    out_path = str(current_dir / '长图')
+    out_path = str(current_dir / 'result_pic')
     
     # 添加用户是否开启自定义设置功能    
     config_open =  is_customized('是否要自定义设置相关参数？(y/n): ')
