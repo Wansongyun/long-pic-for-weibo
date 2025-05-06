@@ -44,8 +44,8 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
             remove(file_path)
         result.save(file_path, quality = quality) 
 
+    # 最后一页长图保存
     final_sum_height = sum([im[1] + space for im in imgs_size[per_page * (out_n - 1):]]) - space
-    # print(final_sum_height)
     if final_sum_height <= 0:
         print('仅能拼接', out_n - 1, '张')
         return 0
@@ -53,10 +53,10 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
     result = merge_single(result,
                       imgs[per_page * (out_n - 1) : ],
                       imgs_size[per_page * (out_n - 1) : ], space) #拼接单个长图
-    file_path = out_path + '/'+ str(i) + '.' + format
+    file_path = out_path + '/'+ str(out_n) + '.' + format
     if exists(file_path):
         remove(file_path)
-    result.save(file_path, quality = quality) #存起来
+    result.save(file_path, quality = quality) 
 
     print('\n图片总数: ', total_num)
     print('分割条数: ', out_n)
