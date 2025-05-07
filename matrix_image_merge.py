@@ -29,7 +29,12 @@ def calculate_grid(number, n=None, m=None):
                 return n, m
             
 
-def merge_images(image_paths, output_path, rows=None, cols=None, gap=10, width=None, height=None):
+# 默认间隔
+gap_default = 0
+# 缩放倍数
+scale_default = 1
+
+def merge_images(image_paths, output_path, rows=None, cols=None, gap=gap_default, width=None, height=None):
     """
     将多张图片按矩阵形式合并
     
@@ -53,17 +58,19 @@ def merge_images(image_paths, output_path, rows=None, cols=None, gap=10, width=N
     # 打开第一张图片来获取相关尺寸信息
     with open(image_paths[0], 'rb') as f:
         img_width, img_height = Image.open(f).size
-        if width is None:
-            width = img_width
-        if height is None:
-            height = img_height
         aspect_ratio = img_height / img_width
         # 如果只指定了宽度，按比例计算高度
         if width and not height:
             height = int(width * aspect_ratio)
         # 如果只指定了高度，按比例计算宽度
-        if height and not width:
+        elif height and not width:
             width = int(height / aspect_ratio)
+        # 如果都没有指定，则使用缩放倍数
+        elif width is None and height is None:
+            width = int(img_width * scale_default)
+            height = int(img_height * scale_default)
+            
+        
     
     # 让首行图片为较小的数量（余数）
     first_row_imgs = number - (rows - 1) * cols
@@ -81,10 +88,10 @@ def merge_images(image_paths, output_path, rows=None, cols=None, gap=10, width=N
     # 将图片粘贴到新图像上
     current_img = 0
     for row in range(rows):
-        if row == 0:
-            col_range = first_row_imgs
-        else:
-            col_range = cols
+        # if row == 0:
+        #     col_range = first_row_imgs
+        # else:
+        col_range = cols
         for col in range(col_range):
             if current_img < number:
                 try:
@@ -96,9 +103,9 @@ def merge_images(image_paths, output_path, rows=None, cols=None, gap=10, width=N
                     x = col * (width + gap)
                     y = row * (height + gap)
                     
-                    # 计算首行偏移
-                    if row == 0 and offset > 0:
-                        x += offset
+                    # # 计算首行偏移
+                    # if row == 0 and offset > 0:
+                    #     x += offset
 
                     # 粘贴图片
                     merged_image.paste(img, (x, y))
@@ -183,16 +190,16 @@ def main():
             rows, cols = calculate_grid(len(image_paths))
             print(f"自动计算的行数为: {rows}, 列数为: {cols}")
         
-        gap_input = input("请输入图片间隔(默认10像素): ").strip()
-        gap = 10
+        gap_input = input("请输入图片间隔(默认0像素): ").strip()
+        gap = 0
         if gap_input:
             try:
                 gap = int(gap_input)
                 if gap < 0:
-                    print("间隔不能为负数，将使用默认值10")
-                    gap = 10
+                    print("间隔不能为负数，将使用默认值0")
+                    gap = 0
             except ValueError:
-                print("输入无效，将使用默认值10")
+                print("输入无效，将使用默认值")
         
         width_input = input("请输入图片宽度(不输入则使用原图宽度): ").strip()
         width = None
@@ -226,7 +233,7 @@ def main():
     else:
         # 使用默认参数
         rows, cols = calculate_grid(len(image_paths))
-        gap = 10
+        gap = 0
         width = None
         height = None
         output_path = str(output_dir / 'merged.png')
