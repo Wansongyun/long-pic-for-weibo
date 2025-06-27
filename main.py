@@ -91,8 +91,8 @@ if not exists(origin_pic_dir):
 image_files = glob(str(origin_pic_dir / '*.png')) + \
               glob(str(origin_pic_dir / '*.jpg')) + \
               glob(str(origin_pic_dir / '*.jpeg')) + \
-              glob(str(origin_pic_dir / '*.bmp'))
-
+              glob(str(origin_pic_dir / '*.bmp')) + \
+              glob(str(origin_pic_dir / '*.jiff')) 
 
 # def get_image_files(directory: Path):
 #     # 定义图片格式
