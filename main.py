@@ -7,7 +7,16 @@ from os.path import exists
 import logging
 
 def merge_image(imgs, format, width, space, out_n, quality, out_path):
-    color = (255, 255, 255)
+    # 检查是否有透明背景的图片
+    has_transparency = any(im.mode in ('RGBA', 'LA') for im in imgs)
+    
+    if has_transparency and format.lower() in ['png', 'webp']:
+        color = (255, 255, 255, 0)  # 透明背景
+        mode = "RGBA"
+    else:
+        color = (255, 255, 255)  # 白色背景
+        mode = "RGB"
+    
     total_num = len(imgs)
     if total_num % out_n != 0:
         per_page = round(total_num / (out_n))
@@ -32,11 +41,13 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
             print('仅能拼接', i - 1, '张')
             return 0
 
-        result = new("RGB", (width, sum_height), color)
         #新建空白长图
+        result = new(mode, (width, sum_height), color)
+        #拼接单个长图
         result = merge_single(result,
                           imgs[per_page * (i - 1) : per_page * i],
-                          imgs_size[per_page * (i - 1) : per_page * i], space) #拼接单个长图
+                          imgs_size[per_page * (i - 1) : per_page * i], space) 
+        #存起来
         if not exists(out_path):
             mkdir(out_path)
         file_path = out_path + '/'+ str(i) + '.' + format
@@ -49,7 +60,7 @@ def merge_image(imgs, format, width, space, out_n, quality, out_path):
     if final_sum_height <= 0:
         print('仅能拼接', out_n - 1, '张')
         return 0
-    result = new("RGB", (width, final_sum_height), color) #新建空白长图
+    result = new(mode, (width, final_sum_height), color) #新建空白长图
     result = merge_single(result,
                       imgs[per_page * (out_n - 1) : ],
                       imgs_size[per_page * (out_n - 1) : ], space) #拼接单个长图
@@ -111,9 +122,12 @@ image_files = glob(str(origin_pic_dir / '*.png')) + \
 
 def read_pic():
     ims = [open(fn) for fn in (image_files)]
-    #所有图片转换成rgb
+    # 对于PNG等可能包含透明通道的图片，保持其原始格式
     for i, im in enumerate(ims):
-        ims[i] = ims[i].convert("RGB")
+        # 如果图片是包含透明通道的RGBA/LA（灰度图）模式，保持原样
+        # 如果是其他模式且不包含透明通道，转换为RGB
+        if im.mode not in ('RGBA', 'LA'):
+            ims[i] = ims[i].convert("RGB")
     return (ims)
 
 def is_customized(args):
